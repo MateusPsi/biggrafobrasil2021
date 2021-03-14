@@ -1,0 +1,120 @@
+---
+title: "Big Grafo Brasil"
+output: html_notebook
+---
+
+```{r}
+library(ggraph)
+library(png)
+library(here)
+```
+
+```{r}
+brothers <- c(
+      "Viih Tube",
+      "Thais",
+      "Sarah",
+      "Rodolffo",
+      "Projota",
+      "Pocah",
+      "Juliette",
+      "Joao",
+      "Gilberto",
+      "Fiuk",
+      "Carla Diaz",
+      "Camilla",
+      "Caio",
+      "Arthur"
+)
+
+
+brothers_matrix <- matrix(rep(rep(0,14),14),14,14,
+       dimnames = list(brothers,brothers))
+```
+
+```{r}
+
+make_link <- function(x,y,mat){
+      mat[x,y] <- 1
+      mat[y,x] <- 1
+      
+      mat
+}
+
+brothers_matrix <- make_link("Viih Tube", "Thais", brothers_matrix)
+
+brothers_matrix <- make_link("Sarah", "Gilberto", brothers_matrix)
+brothers_matrix <- make_link("Sarah", "Caio", brothers_matrix)
+brothers_matrix <- make_link("Sarah", "Rodolffo", brothers_matrix)
+
+brothers_matrix <- make_link("Rodolffo", "Caio", brothers_matrix)
+
+brothers_matrix <- make_link("Projota", "Arthur", brothers_matrix)
+brothers_matrix <- make_link("Projota", "Caio", brothers_matrix)
+
+brothers_matrix <- make_link("Pocah", "Thais", brothers_matrix)
+brothers_matrix <- make_link("Pocah", "Viih Tube", brothers_matrix)
+
+brothers_matrix <- make_link("Juliette", "Viih Tube", brothers_matrix)
+brothers_matrix <- make_link("Juliette", "Gilberto", brothers_matrix)
+brothers_matrix <- make_link("Juliette", "Sarah", brothers_matrix)
+brothers_matrix <- make_link("Juliette", "Carla Diaz", brothers_matrix)
+
+brothers_matrix <- make_link("Joao", "Carla Diaz", brothers_matrix)
+brothers_matrix <- make_link("Joao", "Camilla", brothers_matrix)
+
+brothers_matrix <- make_link("Gilberto", "Fiuk", brothers_matrix)
+brothers_matrix <- make_link("Gilberto", "Caio", brothers_matrix)
+
+brothers_matrix <- make_link("Carla Diaz", "Camilla", brothers_matrix)
+brothers_matrix <- make_link("Carla Diaz", "Arthur", brothers_matrix)
+
+
+```
+
+```{r}
+library(qgraph)
+qgraph(brothers_matrix, label.norm = "Oooo")
+```
+
+```{r}
+
+theme_set(theme_minimal()+theme(plot.margin = margin(20,10,20,10)))
+bbb_graph <- ggraph(brothers_matrix)+
+      geom_edge_link(edge_width = 1, colour = "#603d77")+
+      geom_node_point()+
+      coord_cartesian(clip = "off")
+```
+
+```{r}
+library(jpeg)
+bigBrother <- readJPEG('orangeSquare.jpg',native = T)
+
+pg <- ggraph(brothers_matrix)+
+      geom_edge_link()+
+     geom_node_point()+
+      geom_node_label(aes(label = brothers))+
+      annotation_raster(bigBrother, 0.40256292 -.25, 0.40256292 +.25, 
+                        0.03344348-.4, 0.03344348+.4)
+```
+
+```{r}
+add_photo <- function(p, brother){
+   brother_photo <- readPNG(paste0("figs/",brother,".png"),native = T)
+   brother_x <- bbb_graph$data %>% filter(name == brother)  %>% select(x)
+   brother_y <- bbb_graph$data %>% filter(name == brother)  %>% select(y)
+   
+   p+annotation_raster(brother_photo, brother_x$x -.25, brother_x$x +.25, 
+                        brother_y$y-.35, brother_y$y+.35)
+}
+
+bbb_graph <- Reduce(add_photo, brothers,init = bbb_graph)
+```
+
+```{r}
+bbb_logo <- readPNG("figs/bbb-logo.png",native = T)
+bbb_graph +
+   annotation_raster(bbb_logo, 1.3,2.8, 2.5, 1.5)
+
+```
+
