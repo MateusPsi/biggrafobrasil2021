@@ -109,3 +109,4 @@ bbb_graph +
 sessionInfo()
 ```
 
+Disclaimer: as imagens referentes ao Big Brother Brasil são de propriedade da Globo Comunicação e Participações S.A. e foram obtidas no site de divulgação do programa.
