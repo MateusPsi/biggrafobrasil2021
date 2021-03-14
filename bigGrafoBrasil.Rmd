@@ -73,29 +73,11 @@ brothers_matrix <- make_link("Carla Diaz", "Arthur", brothers_matrix)
 ```
 
 ```{r}
-library(qgraph)
-qgraph(brothers_matrix, label.norm = "Oooo")
-```
-
-```{r}
-
 theme_set(theme_minimal()+theme(plot.margin = margin(20,10,20,10)))
 bbb_graph <- ggraph(brothers_matrix)+
       geom_edge_link(edge_width = 1, colour = "#603d77")+
       geom_node_point()+
       coord_cartesian(clip = "off")
-```
-
-```{r}
-library(jpeg)
-bigBrother <- readJPEG('orangeSquare.jpg',native = T)
-
-pg <- ggraph(brothers_matrix)+
-      geom_edge_link()+
-     geom_node_point()+
-      geom_node_label(aes(label = brothers))+
-      annotation_raster(bigBrother, 0.40256292 -.25, 0.40256292 +.25, 
-                        0.03344348-.4, 0.03344348+.4)
 ```
 
 ```{r}
