@@ -78,7 +78,7 @@ brothers_matrix <- make_link("Carla Diaz", "Arthur", brothers_matrix)
 ```{r}
 theme_set(theme_minimal()+theme(plot.margin = margin(20,10,20,10)))
 bbb_graph <- ggraph(brothers_matrix)+
-      geom_edge_link(edge_width = 1, colour = "#603d77")+
+      geom_edge_link0(edge_width = 1, colour = "#603d77")+
       geom_node_point()+
       coord_cartesian(clip = "off")
 ```
