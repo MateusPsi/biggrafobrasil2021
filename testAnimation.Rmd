@@ -1,0 +1,72 @@
+---
+title: "Test Animation"
+output: html_notebook
+---
+
+
+```{r}
+library(gganimate)
+```
+
+```{r}
+bbb_graph2 <- bbb_graph
+bbb_graph2$data <- rbind(bbb_graph2$data,bbb_graph2$data)      
+
+bbb_graph2$data$state <- c(rep(1,14), rep(2,14))
+
+
+bbb_graph2$data[c(1:14),] <-  bbb_graph2$data %>% 
+      filter(state == 1) %>% 
+      mutate(across(c(1,2), ~.x*0))
+```
+
+```{r}
+bbb_graph2 + 
+      transition_states(state)
+# TENTAR IMAGER E GEOM_RASTER
+```
+
+```{r}
+library(imager)
+ju <- load.image(paste0(here(),"/figs/","Fiuk",".png"))
+#ju <- imresize(ju,.75, 6)
+ju_size <- 106
+```
+
+```{r}
+ju_dt <- as.data.frame(ju, wide = "c") %>% mutate(rgb =rgb(c.1,c.2,c.3))
+ggplot(ju_dt,aes(x,y))+geom_raster(aes(fill=rgb))+scale_fill_identity()+scale_y_reverse()
+```
+
+```{r}
+ju_coords <- bbb_graph$data %>% filter(name == "Fiuk")
+
+new_x <- rep(seq(ju_coords$x-.25, ju_coords$x+.25, length.out = ju_size),ju_size)
+new_y <- rep(seq(ju_coords$y+.25,ju_coords$y-.25, length.out = ju_size),each = ju_size)
+
+ju_dt_2 <- ju_dt %>% mutate(x = new_x, y = new_y, name = "Fiuk", state = 1)
+
+centered_x <- rep(seq(-.25, .25, length.out = ju_size),ju_size)
+centered_y <- rep(seq(.25,-.25, length.out = ju_size),each = ju_size)
+
+centered_dt <- ju_dt_2 %>% mutate(x = centered_x, y = centered_y,
+                                  state = 0)
+
+ju_dt_3 <- rbind(ju_dt_2, centered_dt)
+```
+
+```{r}
+bbb_graph + geom_raster(aes(x,y, fill = rgb), data = ju_dt_2) +
+      scale_fill_identity()
+```
+
+```{r}
+bbb_graph + geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = ju_dt_3) +
+    scale_fill_identity()
+```
+
+```{r}
+bbb_graph + geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = ju_dt_3) +
+    scale_fill_identity()+ transition_states(state)
+```
+
