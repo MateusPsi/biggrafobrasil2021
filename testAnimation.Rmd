@@ -6,67 +6,233 @@ output: html_notebook
 
 ```{r}
 library(gganimate)
-```
-
-```{r}
-bbb_graph2 <- bbb_graph
-bbb_graph2$data <- rbind(bbb_graph2$data,bbb_graph2$data)      
-
-bbb_graph2$data$state <- c(rep(1,14), rep(2,14))
-
-
-bbb_graph2$data[c(1:14),] <-  bbb_graph2$data %>% 
-      filter(state == 1) %>% 
-      mutate(across(c(1,2), ~.x*0))
-```
-
-```{r}
-bbb_graph2 + 
-      transition_states(state)
-# TENTAR IMAGER E GEOM_RASTER
-```
-
-```{r}
+library(ggraph)
+library(dplyr)
+library(png)
+library(here)
 library(imager)
-ju <- load.image(paste0(here(),"/figs/","Fiuk",".png"))
-#ju <- imresize(ju,.75, 6)
-ju_size <- 106
+```
+
+## Criar matriz de relações
+```{r}
+brothers <- c(
+      "Viih Tube",
+      "Thais",
+      "Sarah",
+      "Rodolffo",
+      "Projota",
+      "Pocah",
+      "Juliette",
+      "Joao",
+      "Gilberto",
+      "Fiuk",
+      "Carla Diaz",
+      "Camilla",
+      "Caio",
+      "Arthur"
+)
+
+
+brothers_matrix <- matrix(rep(rep(0,14),14),14,14,
+       dimnames = list(brothers,brothers))
 ```
 
 ```{r}
-ju_dt <- as.data.frame(ju, wide = "c") %>% mutate(rgb =rgb(c.1,c.2,c.3))
-ggplot(ju_dt,aes(x,y))+geom_raster(aes(fill=rgb))+scale_fill_identity()+scale_y_reverse()
+make_link <- function(x,y,mat){
+      mat[x,y] <- 1
+      mat[y,x] <- 1
+      
+      mat
+}
+
+brothers_matrix <- make_link("Viih Tube", "Thais", brothers_matrix)
+
+brothers_matrix <- make_link("Sarah", "Gilberto", brothers_matrix)
+brothers_matrix <- make_link("Sarah", "Caio", brothers_matrix)
+brothers_matrix <- make_link("Sarah", "Rodolffo", brothers_matrix)
+
+brothers_matrix <- make_link("Rodolffo", "Caio", brothers_matrix)
+
+brothers_matrix <- make_link("Projota", "Arthur", brothers_matrix)
+brothers_matrix <- make_link("Projota", "Caio", brothers_matrix)
+
+brothers_matrix <- make_link("Pocah", "Thais", brothers_matrix)
+brothers_matrix <- make_link("Pocah", "Viih Tube", brothers_matrix)
+
+brothers_matrix <- make_link("Juliette", "Viih Tube", brothers_matrix)
+brothers_matrix <- make_link("Juliette", "Gilberto", brothers_matrix)
+brothers_matrix <- make_link("Juliette", "Sarah", brothers_matrix)
+brothers_matrix <- make_link("Juliette", "Carla Diaz", brothers_matrix)
+
+brothers_matrix <- make_link("Joao", "Carla Diaz", brothers_matrix)
+brothers_matrix <- make_link("Joao", "Camilla", brothers_matrix)
+
+brothers_matrix <- make_link("Gilberto", "Fiuk", brothers_matrix)
+brothers_matrix <- make_link("Gilberto", "Caio", brothers_matrix)
+
+brothers_matrix <- make_link("Carla Diaz", "Camilla", brothers_matrix)
+brothers_matrix <- make_link("Carla Diaz", "Arthur", brothers_matrix)
+
+
+```
+
+## Fazer grafo
+### Grafo sem fotos
+```{r}
+
+graph <- as_tbl_graph(brothers_matrix, directed = F)
+graph <- graph %>% activate(edges) %>% mutate(state = 1)
+
+theme_set(theme_minimal()+theme(plot.margin = margin(20,10,20,10)))
+bbb_graph <- ggraph(graph)+ #brothers_matrix
+      geom_edge_link0(edge_width = 1, colour = "#603d77")+
+      coord_cartesian(clip = "off")
+```
+
+
+```{r}
+# Se quiser animar pontos os pontos do ggraph
+# bbb_graph2 <- bbb_graph
+# bbb_graph2$data <- rbind(bbb_graph2$data,bbb_graph2$data)      
+# 
+# bbb_graph2$data$state <- c(rep(1,14), rep(2,14))
+# 
+# 
+# bbb_graph2$data[c(1:14),] <-  bbb_graph2$data %>% 
+#       filter(state == 1) %>% 
+#       mutate(across(c(1,2), ~.x*0))
 ```
 
 ```{r}
-ju_coords <- bbb_graph$data %>% filter(name == "Fiuk")
+# bbb_graph2 + 
+#       transition_states(state)
+```
 
-new_x <- rep(seq(ju_coords$x-.25, ju_coords$x+.25, length.out = ju_size),ju_size)
-new_y <- rep(seq(ju_coords$y+.25,ju_coords$y-.25, length.out = ju_size),each = ju_size)
-
-ju_dt_2 <- ju_dt %>% mutate(x = new_x, y = new_y, name = "Fiuk", state = 1)
-
-centered_x <- rep(seq(-.25, .25, length.out = ju_size),ju_size)
-centered_y <- rep(seq(.25,-.25, length.out = ju_size),each = ju_size)
-
-centered_dt <- ju_dt_2 %>% mutate(x = centered_x, y = centered_y,
-                                  state = 0)
-
-ju_dt_3 <- rbind(ju_dt_2, centered_dt)
+## Animar foto com geom_tile e gganimate
+```{r}
+brother <- load.image(paste0(here(),"/figs/","Fiuk",".png"))
+brother_size <- 106
 ```
 
 ```{r}
-bbb_graph + geom_raster(aes(x,y, fill = rgb), data = ju_dt_2) +
+brother_dt <- as.data.frame(brother, wide = "c") %>% mutate(rgb =rgb(c.1,c.2,c.3))
+ggplot(brother_dt,aes(x,y))+geom_raster(aes(fill=rgb))+scale_fill_identity()+scale_y_reverse()
+```
+
+```{r}
+brother_coords <- bbb_graph$data %>% filter(name == "Fiuk")
+
+new_x <- rep(seq(brother_coords$x-.25, brother_coords$x+.25, length.out = brother_size),brother_size)
+new_y <- rep(seq(brother_coords$y+.25,brother_coords$y-.25, length.out = brother_size),each = brother_size)
+
+brother_dt_2 <- brother_dt %>% mutate(x = new_x, y = new_y, name = "Fiuk", state = 2)
+#brother_dt_2 <- rbind(brother_dt_2, brother_dt_2 %>% mutate(state = 2))
+
+
+centered_x <- rep(seq(-.25, .25, length.out = brother_size),brother_size)
+centered_y <- rep(seq(.25,-.25, length.out = brother_size),each = brother_size)
+
+centered_dt <- brother_dt_2 %>% mutate(x = centered_x, y = centered_y,
+                                  state = 1)
+
+brother_dt_3 <- rbind(centered_dt,brother_dt_2)
+```
+
+```{r}
+bbb_graph + geom_raster(aes(x,y, fill = rgb), data = brother_dt_2) +
       scale_fill_identity()
 ```
 
 ```{r}
-bbb_graph + geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = ju_dt_3) +
+bbb_graph + geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = brother_dt_3) +
     scale_fill_identity()
 ```
 
 ```{r}
-bbb_graph + geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = ju_dt_3) +
-    scale_fill_identity()+ transition_states(state)
+bbb_graph + geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = brother_dt_3) +
+    scale_fill_identity()+ transition_states(state,wrap = F)
+```
+
+## Animar edges
+```{r}
+graph <- as_tbl_graph(brothers_matrix, directed = F)
+graph <- graph %>% activate(edges) %>% mutate(state = 1)
+
+theme_set(theme_minimal()+theme(plot.margin = margin(20,10,20,10)))
+bbb_graph <- ggraph(graph)+ #brothers_matrix
+      geom_edge_link0(edge_width = 1, colour = "#603d77", alpha = alpha)+
+      coord_cartesian(clip = "off")
+```
+
+```{r}
+edges <- graph %>% activate(edges) %>% as_tibble()
+new_edges <- tibble(from = c(edges$from),
+                    to = c(edges$to),
+                    weight = c(edges$weight),
+                    state = c(rep(2,19)))
+
+graph <- bind_edges(graph, new_edges)
+
+graph <- graph %E>% mutate(alpha = c(rep(0,19), rep(1,19)))  
+```
+
+### Based on stackoverflow
+https://stackoverflow.com/questions/56206985/smooth-transitions-between-different-layouts-of-the-same-network-in-ggraph
+```{r}
+graph <- as_tbl_graph(brothers_matrix, directed = F)
+bbb_layout <- create_layout(graph,"auto") %>% mutate(frame = 2, weight = NULL)
+graph <- graph %E>% mutate(weight = NULL)
+
+bbb_edges <- igraph::as_data_frame(graph, "edges") %>% 
+  tibble::rowid_to_column() %>%
+  gather(end, name, -rowid) %>%
+  # Here we get the coordinates for each node from `long2`.
+  left_join(bbb_layout %>% select(frame, name, x, y)) %>% 
+  gather(coord, val, x:y) %>%
+  # create xend and yend when at the "to" end, for geom_segment use later
+  mutate(col = paste0(coord, if_else(end == "to", "end", ""))) %>%
+  select(frame, rowid, col, val) %>%
+  arrange(frame, rowid) %>%
+  spread(col, val) %>%
+  # Get the node names for the coordinates we're using, so that we
+  #   can name the edge from a to b as "a_b" and gganimate can tween
+  #   correctly between frames. 
+  left_join(bbb_layout %>% select(frame, x, y, start_name = name)) %>%
+  left_join(bbb_layout %>% select(frame, xend = x, yend = y, end_name = name)) %>%
+  unite(edge_name, c("start_name", "end_name"))
+
+bbb_layout <- rbind(bbb_layout, bbb_layout %>% mutate(frame = 1))
+
+bbb_edges 
+```
+
+```{r}
+ggplot() +
+  geom_segment(data = bbb_edges, 
+               aes(x = x, xend = xend, y = y, yend = yend, color = edge_name)) +
+  geom_point(data = bbb_layout, aes(x, y, color = name), size = 4) +
+  geom_text(data = bbb_layout, aes(x, y, label = name)) +
+  guides(color = F) +
+ # ease_aes("quadratic-in-out") +
+  transition_states(frame, state_length = 1)
+```
+
+```{r}
+names(brother_dt_3)[9] <- "frame"
+brother_dt_3 <- brother_dt_3 %>% mutate(frame = ifelse(frame == 1, 2,1))
+
+bbb_edges <- rbind(bbb_edges, bbb_edges %>% mutate(x = xend, y = yend, frame = 1))
+
+bbb_edges <- bbb_edges %>% arrange(frame)
+brother_dt_3 <-  brother_dt_3 %>% arrange(frame)
+
+a <- ggplot()+
+  geom_segment(data = bbb_edges, 
+               aes(x = x, xend = xend, y = y, yend = yend),
+               colour = "#603d77", size = 2) +
+  geom_tile(aes(x,y, fill = rgb, width = 0.0491 - 0.0443), data = brother_dt_3) +
+  scale_fill_identity()+ transition_states(frame, wrap = F)
+
+animate(a)
 ```
 
